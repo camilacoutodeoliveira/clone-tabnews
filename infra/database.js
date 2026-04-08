@@ -1,24 +1,9 @@
 import { Client } from "pg";
 
 async function query(queryObject) {
-  // console.log(process.env.POSTGRES_DATABASE);
-  const client = new Client({
-    host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT,
-    user: process.env.POSTGRES_USER,
-    database: process.env.POSTGRES_DB,
-    password: process.env.POSTGRES_PASSWORD,
-    ssl: process.env.NODE_ENV === "development" ? false : true,
-  });
-console.log('Credenciais PG', {
-    host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT,
-    user: process.env.POSTGRES_USER,
-    database: process.env.POSTGRES_DB,
-    password: process.env.POSTGRES_PASSWORD,
-  });
+  let client;
   try {
-    await client.connect();
+    client = await getNewClient();
     const result = await client.query(queryObject);
     return result;
   } catch (error) {
@@ -29,6 +14,25 @@ console.log('Credenciais PG', {
   }
 }
 
+async function getNewClient(queryString) {
+  const client = new Client({
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
+    user: process.env.POSTGRES_USER,
+    database: process.env.POSTGRES_DB,
+    password: process.env.POSTGRES_PASSWORD,
+    ssl: getSSLValues(),
+  });
+  await client.connect();
+
+  return client;
+}
+
 export default {
-  query: query,
+  query,
+  getNewClient,
 };
+
+function getSSLValues() {
+  return process.env.NODE_ENV === "production" ? true : false;
+}
